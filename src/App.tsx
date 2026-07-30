@@ -1,122 +1,102 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+
+// Auth pages
+import WelcomePage from './pages/auth/WelcomePage';
+import ChooseRolePage from './pages/auth/ChooseRolePage';
+import StudentLoginPage from './pages/auth/StudentLoginPage';
+import StudentRegisterPage from './pages/auth/StudentRegisterPage';
+import CompanyLoginPage from './pages/auth/CompanyLoginPage';
+import CompanyRegisterPage from './pages/auth/CompanyRegisterPage';
+
+// Student pages
+import StudentFeedPage from './pages/student/StudentFeedPage';
+import JobDetailPage from './pages/student/JobDetailPage';
+import StudentApplicationsPage from './pages/student/StudentApplicationsPage';
+import StudentProfilePage from './pages/student/StudentProfilePage';
+import EditProfilePage from './pages/student/EditProfilePage';
+import UploadDocumentsPage from './pages/student/UploadDocumentsPage';
+import CompanyPublicProfilePage from './pages/student/CompanyPublicProfilePage';
+
+// Company pages
+import CompanyJobsPage from './pages/company/CompanyJobsPage';
+import PostJobPage from './pages/company/PostJobPage';
+import EditJobPage from './pages/company/EditJobPage';
+import ReviewApplicantsPage from './pages/company/ReviewApplicantsPage';
+import CompanyProfilePage from './pages/company/CompanyProfilePage';
+
+// Admin pages
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminStudentsPage from './pages/admin/AdminStudentsPage';
+import AdminCompaniesPage from './pages/admin/AdminCompaniesPage';
+import AdminJobsPage from './pages/admin/AdminJobsPage';
+import AdminApplicationsPage from './pages/admin/AdminApplicationsPage';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-navy text-lg font-semibold">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Routes>
+      {/* Public routes */}
+      {!user && (
+        <>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/choose-role" element={<ChooseRolePage />} />
+          <Route path="/student/login" element={<StudentLoginPage />} />
+          <Route path="/student/register" element={<StudentRegisterPage />} />
+          <Route path="/company/login" element={<CompanyLoginPage />} />
+          <Route path="/company/register" element={<CompanyRegisterPage />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
+      )}
 
-      <div className="ticks"></div>
+      {/* Student routes */}
+      {user?.role === 'STUDENT' && (
+        <>
+          <Route path="/" element={<StudentFeedPage />} />
+          <Route path="/jobs/:jobId" element={<JobDetailPage />} />
+          <Route path="/applications" element={<StudentApplicationsPage />} />
+          <Route path="/profile" element={<StudentProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/documents" element={<UploadDocumentsPage />} />
+          <Route path="/company/:companyId" element={<CompanyPublicProfilePage />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Company routes */}
+      {user?.role === 'COMPANY' && (
+        <>
+          <Route path="/" element={<CompanyJobsPage />} />
+          <Route path="/post-job" element={<PostJobPage />} />
+          <Route path="/jobs/:jobId/edit" element={<EditJobPage />} />
+          <Route path="/jobs/:jobId/applicants" element={<ReviewApplicantsPage />} />
+          <Route path="/profile" element={<CompanyProfilePage />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Admin routes */}
+      {user?.role === 'ADMIN' && (
+        <>
+          <Route path="/" element={<AdminDashboardPage />} />
+          <Route path="/students" element={<AdminStudentsPage />} />
+          <Route path="/companies" element={<AdminCompaniesPage />} />
+          <Route path="/jobs" element={<AdminJobsPage />} />
+          <Route path="/applications" element={<AdminApplicationsPage />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </>
+      )}
+    </Routes>
+  );
 }
 
-export default App
+export default App;
