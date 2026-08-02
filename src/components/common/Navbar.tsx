@@ -24,9 +24,11 @@ const Navbar = () => {
           <Link to="/" className="text-sm text-gray-600 hover:text-navy transition-colors">
             Home
           </Link>
-          <Link to="/choose-role" className="text-sm text-gray-600 hover:text-navy transition-colors">
-            Explore
+          {user?.role === 'STUDENT' && (
+          <Link to="/feed" className="text-sm text-gray-600 hover:text-navy transition-colors">
+            Browse Jobs
           </Link>
+            )}
           <a href="#about" className="text-sm text-gray-600 hover:text-navy transition-colors">
             About
           </a>
