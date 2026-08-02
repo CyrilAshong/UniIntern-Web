@@ -10,6 +10,7 @@ import CompanyLoginPage from './pages/auth/CompanyLoginPage';
 import CompanyRegisterPage from './pages/auth/CompanyRegisterPage';
 
 // Student pages
+import StudentDashboardPage from './pages/student/StudentDashboardPage';
 import StudentFeedPage from './pages/student/StudentFeedPage';
 import JobDetailPage from './pages/student/JobDetailPage';
 import StudentApplicationsPage from './pages/student/StudentApplicationsPage';
@@ -61,7 +62,8 @@ function App() {
       {/* Student routes */}
       {user?.role === 'STUDENT' && (
         <>
-          <Route path="/" element={<StudentFeedPage />} />
+          <Route path="/" element={<StudentDashboardPage />} />
+          <Route path="/feed" element={<StudentFeedPage />} />
           <Route path="/jobs/:jobId" element={<JobDetailPage />} />
           <Route path="/applications" element={<StudentApplicationsPage />} />
           <Route path="/profile" element={<StudentProfilePage />} />
