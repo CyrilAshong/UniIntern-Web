@@ -1,5 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  Building2,
+  Zap,
+  Bot,
+  CheckCircle2,
+  Mail,
+  Lock,
+  Globe,
+  ClipboardCheck,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { registerCompany } from '../../services/authService';
 
@@ -23,7 +35,6 @@ const CompanyRegisterPage = () => {
   const [industry, setIndustry] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,9 +77,9 @@ const CompanyRegisterPage = () => {
 
         <div className="relative z-10">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-12">
+          <div className="flex items-center gap-2.5 mb-12">
             <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="text-white text-sm">🏢</span>
+              <Building2 className="size-5 text-white" />
             </div>
             <span className="text-white font-bold text-sm">UniIntern</span>
           </div>
@@ -85,33 +96,34 @@ const CompanyRegisterPage = () => {
           <div className="space-y-3">
             {[
               {
-                icon: '⚡',
+                icon: Zap,
                 title: 'Instant Postings',
                 desc: 'Deploy internship listings to thousands of applicants in seconds.',
               },
               {
-                icon: '🤖',
+                icon: Bot,
                 title: 'AI Summaries',
                 desc: 'Get condensed candidate insights without reading every CV.',
               },
               {
-                icon: '✅',
+                icon: CheckCircle2,
                 title: 'Vetted Pipeline',
                 desc: 'Access a secure database of verified student profiles.',
               },
-            ].map((item) => (
+            ].map(({ icon: Icon, title, desc }) => (
               <div
-                key={item.title}
-                className="bg-white/10 rounded-2xl p-4 border border-white/10">
+                key={title}
+                className="bg-white/10 rounded-2xl p-4 border border-white/10"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-sm">{item.icon}</span>
+                    <Icon className="size-4 text-white" />
                   </div>
                   <div>
                     <p className="text-white text-sm font-semibold mb-0.5">
-                      {item.title}
+                      {title}
                     </p>
-                    <p className="text-white/50 text-xs leading-5">{item.desc}</p>
+                    <p className="text-white/50 text-xs leading-5">{desc}</p>
                   </div>
                 </div>
               </div>
@@ -173,7 +185,7 @@ const CompanyRegisterPage = () => {
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                 />
-                <span className="text-gray-300 text-sm">🏢</span>
+                <Building2 className="size-4 text-gray-400 shrink-0" />
               </div>
             </div>
 
@@ -184,7 +196,8 @@ const CompanyRegisterPage = () => {
               <select
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-navy focus:outline-none focus:border-navy transition-colors appearance-none"
                 value={industry}
-                onChange={(e) => setIndustry(e.target.value)}>
+                onChange={(e) => setIndustry(e.target.value)}
+              >
                 <option value="">Select industry...</option>
                 {industries.map((i) => (
                   <option key={i} value={i}>{i}</option>
@@ -204,7 +217,7 @@ const CompanyRegisterPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <span className="text-gray-300 text-sm">✉️</span>
+                <Mail className="size-4 text-gray-400 shrink-0" />
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
                 We only accept official corporate domains for security.
@@ -217,18 +230,12 @@ const CompanyRegisterPage = () => {
               </label>
               <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-navy focus-within:bg-white transition-colors">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type= "password"
                   placeholder="••••••••"
                   className="flex-1 text-sm text-navy bg-transparent focus:outline-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-navy transition-colors">
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
               </div>
             </div>
 
@@ -256,8 +263,19 @@ const CompanyRegisterPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-navy text-white font-semibold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70">
-              {isLoading ? 'Creating Account...' : 'Register Company →'}
+              className="w-full bg-navy text-white font-semibold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2 group"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Register Company</span>
+                  <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
@@ -267,16 +285,22 @@ const CompanyRegisterPage = () => {
             Already have a corporate account?{' '}
             <Link
               to="/company/login"
-              className="text-navy font-bold hover:underline">
+              className="text-navy font-bold hover:underline"
+            >
               Sign In
             </Link>
           </p>
 
           {/* Trust badges */}
           <div className="flex items-center justify-center gap-6 mt-6">
-            {['🔒 Secure', '🌍 Global', '📋 Compliant'].map((badge) => (
-              <span key={badge} className="text-xs text-gray-300 font-medium">
-                {badge}
+            {[
+              { icon: Lock, label: 'Secure' },
+              { icon: Globe, label: 'Global' },
+              { icon: ClipboardCheck, label: 'Compliant' },
+            ].map(({ icon: Icon, label }) => (
+              <span key={label} className="text-xs text-gray-400 font-medium inline-flex items-center gap-1.5">
+                <Icon className="size-3.5 text-gray-400" />
+                {label}
               </span>
             ))}
           </div>
