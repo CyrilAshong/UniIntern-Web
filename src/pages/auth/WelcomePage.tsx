@@ -1,4 +1,15 @@
 import { Link } from 'react-router-dom';
+import {
+  Sparkles,
+  Building2,
+  TrendingUp,
+  Check,
+  Users,
+  FileText,
+  Settings,
+  GraduationCap,
+  ArrowRight,
+} from 'lucide-react';
 import Navbar from '../../components/common/Navbar';
 
 const WelcomePage = () => {
@@ -20,7 +31,7 @@ const WelcomePage = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
           <div className="max-w-2xl">
             <div className="inline-block bg-teal/20 border border-teal/40 text-teal text-xs font-semibold px-3 py-1.5 rounded-full mb-6 tracking-wide">
-              NOW LIVE: SUMMER 2024 COHORT
+              NOW LIVE: SUMMER 2026 COHORT
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
               Bridge the gap between{' '}
@@ -35,8 +46,9 @@ const WelcomePage = () => {
             <div className="flex items-center gap-4">
               <Link
                 to="/choose-role"
-                className="bg-teal text-white font-semibold px-6 py-3 rounded-lg hover:bg-teal-dark transition-colors">
-                Get Started →
+                className="bg-teal text-white font-semibold px-6 py-3 rounded-lg hover:bg-teal-dark transition-colors flex items-center gap-2">
+                <span>Get Started</span>
+                <ArrowRight className="size-4" />
               </Link>
               <button className="text-white font-medium text-sm hover:text-teal transition-colors">
                 View Case Studies
@@ -61,7 +73,7 @@ const WelcomePage = () => {
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="p-5 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-teal-light rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-teal text-lg">✦</span>
+                    <Sparkles className="size-5 text-teal" />
                   </div>
                   <h3 className="font-bold text-navy mb-2">AI Matching</h3>
                   <p className="text-sm text-gray-500 leading-5">
@@ -71,7 +83,7 @@ const WelcomePage = () => {
                 </div>
                 <div className="p-5 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
                   <div className="w-10 h-10 bg-teal-light rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-teal text-lg">🏢</span>
+                    <Building2 className="size-5 text-teal" />
                   </div>
                   <h3 className="font-bold text-navy mb-2">Elite Internships</h3>
                   <p className="text-sm text-gray-500 leading-5">
@@ -84,7 +96,7 @@ const WelcomePage = () => {
               <div className="p-5 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-teal-light rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-teal text-lg">📈</span>
+                    <TrendingUp className="size-5 text-teal" />
                   </div>
                   <div>
                     <h3 className="font-bold text-navy mb-1">Career Growth</h3>
@@ -105,7 +117,7 @@ const WelcomePage = () => {
               />
               <div className="absolute bottom-6 left-6 bg-white rounded-xl px-4 py-3 shadow-lg flex items-center gap-3">
                 <div className="w-8 h-8 bg-teal rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
+                  <Check className="size-4 text-white" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-navy">Success Story</p>
@@ -143,7 +155,7 @@ const WelcomePage = () => {
                 </div>
               ))}
               <div className="mt-4 bg-white/5 rounded-xl p-4 flex items-center justify-center border border-white/10">
-                <span className="text-white/40 text-2xl">📄</span>
+                <FileText className="size-6 text-white/40" />
               </div>
             </div>
 
@@ -159,24 +171,24 @@ const WelcomePage = () => {
               <div className="space-y-6 mb-10">
                 {[
                   {
-                    icon: '👥',
+                    icon: Users,
                     title: 'Precision Sourcing',
                     desc: 'Connect with students from top-tier universities globally using granular skill filtering.',
                   },
                   {
-                    icon: '📄',
+                    icon: FileText,
                     title: 'AI Summaries',
                     desc: 'Review thousands of applications in minutes with automated candidate fit scoring and profile highlights.',
                   },
                   {
-                    icon: '⚙️',
+                    icon: Settings,
                     title: 'Enterprise Management',
                     desc: 'A centralized dashboard to manage listings, track interviews, and collaborate with your hiring team.',
                   },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-4">
                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg">{item.icon}</span>
+                      <item.icon className="size-5 text-white" />
                     </div>
                     <div>
                       <h3 className="font-bold text-white mb-1">{item.title}</h3>
@@ -211,15 +223,16 @@ const WelcomePage = () => {
               to="/student/login"
               className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-lg transition-shadow text-left group">
               <div className="w-12 h-12 bg-teal-light rounded-xl flex items-center justify-center mb-4">
-                <span className="text-teal text-2xl">🎓</span>
+                <GraduationCap className="size-6 text-teal" />
               </div>
               <h3 className="text-xl font-bold text-navy mb-2">I'm a Student</h3>
               <p className="text-sm text-gray-500 leading-5 mb-4">
                 Discover roles, build your profile, and launch your career with
                 AI-driven insights.
               </p>
-              <span className="text-teal text-sm font-semibold group-hover:underline">
-                Explore Internships →
+              <span className="text-teal text-sm font-semibold group-hover:underline flex items-center gap-1">
+                <span>Explore Internships</span>
+                <ArrowRight className="size-4" />
               </span>
             </Link>
 
@@ -227,15 +240,16 @@ const WelcomePage = () => {
               to="/company/login"
               className="bg-white rounded-2xl p-8 border border-gray-100 hover:shadow-lg transition-shadow text-left group">
               <div className="w-12 h-12 bg-navy/10 rounded-xl flex items-center justify-center mb-4">
-                <span className="text-navy text-2xl">🏢</span>
+                <Building2 className="size-6 text-navy" />
               </div>
               <h3 className="text-xl font-bold text-navy mb-2">I'm a Recruiter</h3>
               <p className="text-sm text-gray-500 leading-5 mb-4">
                 Find top-tier university talent and streamline your entire
                 internship program.
               </p>
-              <span className="text-teal text-sm font-semibold group-hover:underline">
-                Post a Listing →
+              <span className="text-teal text-sm font-semibold group-hover:underline flex items-center gap-1">
+                <span>Post a Listing</span>
+                <ArrowRight className="size-4" />
               </span>
             </Link>
           </div>
