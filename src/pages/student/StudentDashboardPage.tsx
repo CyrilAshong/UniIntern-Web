@@ -1,137 +1,221 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { 
+  User, 
+  Zap, 
+  ClipboardList, 
+  Calendar, 
+  ArrowRight, 
+  Briefcase,
+  Building2,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { type Job, type Application } from '../../types';
 import Navbar from '../../components/common/Navbar';
 
-const StudentDashboardPage = () => {
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200/60',
+  SHORTLISTED: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  INTERVIEWING: 'bg-purple-50 text-purple-700 border-purple-200/60',
+  ACCEPTED: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  REJECTED: 'bg-gray-100 text-gray-600 border-gray-200/60',
+};
+
+const HEATMAP_COLORS = [
+  'bg-gray-100',
+  'bg-blue-100',
+  'bg-blue-300',
+  'bg-blue-500',
+  'bg-navy',
+];
+
+const StudentDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const profile = user?.studentProfile as any;
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [matchScores, setMatchScores] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [jobsRes, appsRes] = await Promise.all([
-          api.get('/jobs?limit=4'),
-          api.get('/applications/my-applications'),
-        ]);
-        setJobs(jobsRes.data.data.jobs ?? []);
-        setApplications(appsRes.data.data ?? []);
+  const formatScore = (rawScore: any): number => {
+    if (rawScore === null || rawScore === undefined || isNaN(rawScore)) return 0;
+    const num = Number(rawScore);
+    const percentage = num <= 1 && num > 0 ? num * 100 : num;
+    return Math.round(percentage);
+  };
 
-        for (const job of (jobsRes.data.data.jobs ?? []).slice(0, 4)) {
-          try {
-            const res = await api.get(`/jobs/${job.id}/match`);
-            setMatchScores((prev) => ({ ...prev, [job.id]: res.data.data.score }));
-          } catch {
-            setMatchScores((prev) => ({
-              ...prev,
-              [job.id]: Math.floor(Math.random() * 20) + 75,
-            }));
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setHasError(false);
+
+    try {
+      const [jobsRes, appsRes, matchesRes] = await Promise.allSettled([
+        api.get('/jobs?limit=4'),
+        api.get('/applications/my-applications'),
+        api.get('/jobs/matches'),
+      ]);
+
+      let fetchedJobs: Job[] = [];
+      if (jobsRes.status === 'fulfilled') {
+        fetchedJobs = jobsRes.value.data?.data?.jobs ?? jobsRes.value.data?.jobs ?? [];
       }
-    };
-    loadData();
+
+      let fetchedApps: Application[] = [];
+      if (appsRes.status === 'fulfilled') {
+        fetchedApps = appsRes.value.data?.data ?? appsRes.value.data ?? [];
+      }
+
+      setJobs(fetchedJobs);
+      setApplications(fetchedApps);
+
+      const scoresMap: Record<string, number> = {};
+
+      // 1. Extract scores provided directly from jobs list payload (Gemini calculated)
+      fetchedJobs.forEach((job: any) => {
+        const rawScore = job.matchScore ?? job.score ?? job.match;
+        scoresMap[job.id] = formatScore(rawScore);
+      });
+
+      // 2. Extract scores from Gemini AI matches endpoint response
+      if (matchesRes.status === 'fulfilled') {
+        const matchesData = matchesRes.value.data?.data ?? matchesRes.value.data ?? [];
+        if (Array.isArray(matchesData)) {
+          matchesData.forEach((item: any) => {
+            const jobId = item.jobId ?? item.job?.id ?? item.id;
+            const score = formatScore(item.score ?? item.matchScore ?? item.match);
+            if (jobId) {
+              scoresMap[jobId] = score;
+            }
+          });
+        }
+      }
+
+      setMatchScores(scoresMap);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const appliedCount = applications.length;
-  const pendingCount = applications.filter((a) => a.status === 'PENDING').length;
-  const interviewCount = applications.filter((a) => a.status === 'INTERVIEWING').length;
-
-  const profileCompletion = () => {
-    let score = 0;
-    if (profile?.firstName) score += 20;
-    if (profile?.university) score += 20;
-    if (profile?.courseOfStudy) score += 20;
-    if (profile?.skills?.length > 0) score += 20;
-    if (profile?.biography) score += 20;
-    return score;
-  };
-
-  const completion = profileCompletion();
-
-  const statusColors: Record<string, string> = {
-    PENDING: 'bg-amber-100 text-amber-700',
-    SHORTLISTED: 'bg-blue-100 text-blue-700',
-    INTERVIEWING: 'bg-purple-100 text-purple-700',
-    ACCEPTED: 'bg-teal-light text-teal-dark',
-    REJECTED: 'bg-gray-100 text-gray-500',
-  };
-
-  const heatmap = Array.from({ length: 28 }, (_, i) =>
-    i > 18 ? Math.floor(Math.random() * 4) + 1 : Math.floor(Math.random() * 3),
+  const pendingCount = useMemo(
+    () => applications.filter((a) => a.status === 'PENDING').length,
+    [applications]
   );
-  const heatColors = [
-    'bg-blue-50',
-    'bg-blue-100',
-    'bg-blue-200',
-    'bg-navy/40',
-    'bg-navy',
-  ];
+  const interviewCount = useMemo(
+    () => applications.filter((a) => a.status === 'INTERVIEWING').length,
+    [applications]
+  );
+
+  const completion = useMemo(() => {
+    if (!profile) return 0;
+    let score = 0;
+    if (profile.firstName?.trim()) score += 20;
+    if (profile.university?.trim()) score += 20;
+    if (profile.courseOfStudy?.trim()) score += 20;
+
+    const skillsList = Array.isArray(profile.skills)
+      ? profile.skills
+      : typeof profile.skills === 'string'
+      ? profile.skills.split(',').filter(Boolean)
+      : [];
+
+    if (skillsList.length > 0) score += 20;
+    if (profile.biography?.trim() || profile.bio?.trim()) score += 20;
+    return score;
+  }, [profile]);
+
+  const heatmap = useMemo(
+    () =>
+      Array.from({ length: 28 }, (_, i) =>
+        i > 18 ? Math.floor(Math.random() * 4) + 1 : Math.floor(Math.random() * 3)
+      ),
+    []
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-navy font-semibold">Loading your dashboard...</div>
+      <div className="min-h-screen bg-gray-50/50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-medium text-gray-500">Loading your workspace...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="p-3 bg-red-50 text-red-600 rounded-2xl mb-4">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-navy mb-1">Failed to load dashboard</h3>
+          <p className="text-sm text-gray-500 mb-6 text-center max-w-sm">
+            We encountered a problem fetching your latest data. Please give it another try.
+          </p>
+          <button
+            onClick={loadData}
+            className="bg-navy text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-navy/90 transition-colors shadow-sm">
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+    <div className="min-h-screen bg-gray-50/50 flex flex-col">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+        {/* Header & Quick Stats */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <p className="text-xs font-bold text-gray-400 tracking-widest uppercase mb-2">
-              Dashboard Overview
-            </p>
-            <h1 className="text-4xl font-bold text-navy leading-tight">
-              Welcome back,{' '}
-              <span className="text-blue-600">
-                {profile?.firstName ?? 'Student'}
-              </span>
-              .<br />
-              Your career journey is in motion.
+            <span className="text-xs font-bold text-blue-600 tracking-wider uppercase mb-1 block">
+              Overview
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-navy tracking-tight">
+              Welcome back, {profile?.firstName ?? 'Student'}
             </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Track your internship applications and personalized recommendations.
+            </p>
           </div>
 
-          {/* Stats */}
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
             {[
-              { val: appliedCount, label: 'APPLIED', active: false },
-              { val: pendingCount, label: 'PENDING', active: false },
-              { val: interviewCount, label: 'INTERVIEWS', active: true },
+              { val: appliedCount, label: 'APPLIED', primary: false },
+              { val: pendingCount, label: 'PENDING', primary: false },
+              { val: interviewCount, label: 'INTERVIEWS', primary: true },
             ].map((stat) => (
               <div
                 key={stat.label}
-                className={`rounded-2xl px-6 py-4 text-center min-w-[90px] border ${
-                  stat.active
-                    ? 'bg-navy border-navy'
-                    : 'bg-white border-gray-100'
+                className={`rounded-2xl px-5 py-3.5 text-center min-w-[100px] border transition-all ${
+                  stat.primary
+                    ? 'bg-navy border-navy text-white shadow-sm'
+                    : 'bg-white border-gray-200/80 text-navy'
                 }`}>
-                <p
-                  className={`text-3xl font-bold mb-1 ${
-                    stat.active ? 'text-white' : 'text-navy'
-                  }`}>
+                <p className={`text-2xl font-bold leading-none mb-1 ${stat.primary ? 'text-white' : 'text-navy'}`}>
                   {stat.val}
                 </p>
-                <p
-                  className={`text-[10px] font-bold tracking-widest ${
-                    stat.active ? 'text-white/70' : 'text-gray-400'
-                  }`}>
+                <p className={`text-[10px] font-bold tracking-widest ${stat.primary ? 'text-white/70' : 'text-gray-400'}`}>
                   {stat.label}
                 </p>
               </div>
@@ -139,222 +223,228 @@ const StudentDashboardPage = () => {
           </div>
         </div>
 
-        {/* Profile Completion Banner */}
+        {/* Profile Completion Alert */}
         {completion < 100 && (
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-6 py-4 flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-600 text-lg">👤</span>
+          <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/50 border border-blue-100 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 bg-blue-600/10 text-blue-600 rounded-xl flex-shrink-0 mt-0.5 sm:mt-0">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-navy">
+                  Complete your student profile ({completion}%)
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Profiles with verified details receive up to 3× more matching opportunities.
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-navy mb-0.5">
-                Complete your profile to unlock 3× more matches
-              </p>
-              <p className="text-xs text-gray-500">
-                Recruiters prioritize candidates with updated portfolios and skills.
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-32 h-2 bg-blue-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-navy rounded-full transition-all"
-                    style={{ width: `${completion}%` }}
-                  />
-                </div>
-                <span className="text-sm font-semibold text-navy">
-                  {completion}%
-                </span>
+
+            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="w-24 sm:w-32 bg-gray-200/80 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${completion}%` }}
+                />
               </div>
               <Link
                 to="/profile/edit"
-                className="bg-navy text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-navy-light transition-colors whitespace-nowrap">
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors whitespace-nowrap shadow-sm">
                 Finish Setup
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
-
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid lg:grid-cols-3 gap-8">
+          
+          {/* Main Feed Column */}
+          <div className="lg:col-span-2 space-y-8">
 
             {/* Recommended Jobs */}
-            <div>
+            <section>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-navy">
-                  Recommended for You
-                </h2>
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-blue-600" />
+                  <h2 className="text-base font-bold text-navy">Recommended Matches</h2>
+                </div>
                 <Link
                   to="/feed"
-                  className="text-sm text-blue-600 font-semibold hover:underline">
-                  View all matches →
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 group">
+                  Explore feed
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 {jobs.slice(0, 2).map((job) => {
-                  const score = matchScores[job.id];
+                  const score = matchScores[job.id] ?? 0;
+                  const companyName = job.company?.companyProfile?.companyName;
+
                   return (
                     <div
                       key={job.id}
-                      className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-navy font-bold text-sm">
-                            {job.company.companyProfile?.companyName?.charAt(0) ?? 'C'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-sm font-bold text-navy leading-tight">
-                              {job.title}
-                            </h3>
-                            {score !== undefined && (
-                              <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
-                                ⚡ {score}% Match
-                              </span>
-                            )}
+                      className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:border-gray-300 hover:shadow transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200/60 flex items-center justify-center font-bold text-navy text-sm flex-shrink-0">
+                            {companyName?.charAt(0) ?? 'C'}
                           </div>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {job.company.companyProfile?.companyName} •{' '}
-                            {job.location ?? 'Remote'}
-                          </p>
+                          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[11px] font-bold px-2.5 py-1 rounded-full border border-blue-100">
+                            <Zap className="w-3 h-3 text-blue-600 fill-blue-600" />
+                            {score}% Match
+                          </span>
                         </div>
-                      </div>
 
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {job.skillsRequired.slice(0, 3).map((skill) => (
-                          <span
-                            key={skill}
-                            className="bg-gray-50 text-gray-500 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide border border-gray-100">
-                            {skill}
-                          </span>
-                        ))}
-                        {job.isPaid && (
-                          <span className="bg-gray-50 text-gray-500 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wide border border-gray-100">
-                            PAID
-                          </span>
-                        )}
+                        <h3 className="text-sm font-bold text-navy line-clamp-1 mb-1">
+                          {job.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                          {companyName ?? 'Company'} • {job.location ?? 'Remote'}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1.5 mb-5">
+                          {job.skillsRequired?.slice(0, 3).map((skill) => (
+                            <span
+                              key={skill}
+                              className="text-[10px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">
+                              {skill}
+                            </span>
+                          ))}
+                          {job.isPaid && (
+                            <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-100">
+                              PAID
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <button
                         onClick={() => navigate(`/jobs/${job.id}`)}
-                        className="w-full bg-blue-50 text-navy text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-100 transition-colors">
-                        Apply Now
+                        className="w-full bg-navy/5 text-navy hover:bg-navy hover:text-white text-xs font-semibold py-2.5 rounded-xl transition-all">
+                        View Role
                       </button>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            {/* Recent Application Status */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-base font-bold text-navy">
-                  Recent Application Status
-                </h2>
+            {/* Application Tracker */}
+            <section className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-sm">
+              <div className="flex justify-between items-center mb-5">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-navy" />
+                  <h2 className="text-base font-bold text-navy">Recent Applications</h2>
+                </div>
                 <Link
                   to="/applications"
-                  className="text-xs text-blue-600 font-semibold hover:underline">
-                  View all
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700">
+                  View all ({applications.length})
                 </Link>
               </div>
 
               {applications.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-3xl mb-2">📋</p>
-                  <p className="text-sm text-gray-400">
-                    No applications yet.{' '}
-                    <Link to="/feed" className="text-navy font-semibold hover:underline">
-                      Start applying!
-                    </Link>
-                  </p>
+                <div className="text-center py-10 border border-dashed border-gray-200 rounded-xl">
+                  <Briefcase className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-600 mb-1">No active applications</p>
+                  <p className="text-xs text-gray-400 mb-4">Start applying to available listings to track your progress here.</p>
+                  <Link
+                    to="/feed"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
+                    Find positions
+                  </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {applications.slice(0, 3).map((app) => (
-                    <div
-                      key={app.id}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/jobs/${app.jobPosting.id}`)}>
-                      <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-navy text-xs font-bold">
-                          {app.jobPosting.company.companyProfile?.companyName?.charAt(0) ?? 'C'}
-                        </span>
+                <div className="divide-y divide-gray-100">
+                  {applications.slice(0, 4).map((app) => {
+                    const companyName = app.jobPosting?.company?.companyProfile?.companyName;
+                    return (
+                      <div
+                        key={app.id}
+                        onClick={() => navigate(`/jobs/${app.jobPosting?.id}`)}
+                        className="py-3.5 first:pt-0 last:pb-0 flex items-center justify-between gap-4 hover:bg-gray-50/80 px-2 rounded-xl transition-colors cursor-pointer group">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-gray-100 border border-gray-200/60 flex items-center justify-center text-xs font-bold text-navy flex-shrink-0">
+                            {companyName?.charAt(0) ?? 'C'}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-navy truncate group-hover:text-blue-600 transition-colors">
+                              {app.jobPosting?.title ?? 'Untitled Role'}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {companyName ?? 'Company'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full border tracking-wide uppercase ${
+                              STATUS_COLORS[app.status] ?? 'bg-gray-100 text-gray-600 border-gray-200'
+                            }`}>
+                            {app.status}
+                          </span>
+                          <span className="text-xs text-gray-400 hidden sm:block">
+                            {new Date(app.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-navy">
-                          {app.jobPosting.title}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {app.jobPosting.company.companyProfile?.companyName}
-                        </p>
-                      </div>
-                      <span
-                        className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${
-                          statusColors[app.status] ?? 'bg-gray-100 text-gray-500'
-                        }`}>
-                        {app.status}
-                      </span>
-                      <span className="text-xs text-gray-300 hidden md:block">
-                        {new Date(app.appliedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </section>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
+          {/* Sidebar Column */}
+          <div className="space-y-8">
 
             {/* Upcoming Deadlines */}
-            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <section className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-base font-bold text-navy">
-                  Upcoming Deadlines
-                </h2>
-                <span className="text-gray-300">📅</span>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-navy" />
+                  <h2 className="text-base font-bold text-navy">Deadlines</h2>
+                </div>
+                <span className="text-xs font-bold text-gray-400">Next 14 Days</span>
               </div>
 
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-5">
                 {jobs
                   .filter((j) => j.deadline)
                   .slice(0, 3)
-                  .map((job, i) => {
+                  .map((job) => {
                     const date = new Date(job.deadline!);
                     const daysLeft = Math.ceil(
-                      (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                      (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                     );
+                    const isUrgent = daysLeft <= 2;
+
                     return (
-                      <div key={job.id} className="flex items-center gap-3">
+                      <div key={job.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
                         <div
-                          className={`w-10 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${
-                            i === 0 ? 'bg-red-500' : 'bg-navy'
+                          className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 text-white font-bold ${
+                            isUrgent ? 'bg-red-500' : 'bg-navy'
                           }`}>
-                          <span className="text-white text-xs font-bold">
-                            {date.getDate()}
-                          </span>
-                          <span className="text-white/70 text-[9px] uppercase">
+                          <span className="text-xs leading-none">{date.getDate()}</span>
+                          <span className="text-[9px] font-medium uppercase opacity-80 mt-0.5">
                             {date.toLocaleString('default', { month: 'short' })}
                           </span>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-navy">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-navy truncate">
                             {job.title}
                           </p>
-                          <p
-                            className={`text-xs font-medium ${
-                              daysLeft <= 1 ? 'text-red-500' : 'text-gray-400'
-                            }`}>
+                          <p className={`text-[11px] font-medium flex items-center gap-1 mt-0.5 ${isUrgent ? 'text-red-600' : 'text-gray-400'}`}>
+                            <Clock className="w-3 h-3" />
                             {daysLeft <= 0
                               ? 'Closing today'
                               : daysLeft === 1
                               ? 'Closing tomorrow'
-                              : `${daysLeft} days left`}
+                              : `${daysLeft} days remaining`}
                           </p>
                         </div>
                       </div>
@@ -362,47 +452,47 @@ const StudentDashboardPage = () => {
                   })}
 
                 {jobs.filter((j) => j.deadline).length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">
-                    No upcoming deadlines
-                  </p>
+                  <div className="text-center py-6 text-xs text-gray-400">
+                    No urgent deadlines scheduled.
+                  </div>
                 )}
               </div>
 
-              <button className="w-full border border-gray-200 text-navy text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
-                Manage Calendar
+              <button 
+                onClick={() => navigate('/calendar')}
+                className="w-full border border-gray-200 text-navy text-xs font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+                Open Schedule
               </button>
-            </div>
+            </section>
 
-            {/* Search Intensity */}
-            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-              <h2 className="text-base font-bold text-navy mb-1">
-                Search Intensity
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                Your application activity over the last 4 weeks
-              </p>
-              <div className="grid grid-cols-7 gap-1.5">
+            {/* Search Activity Visualizer */}
+            <section className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-sm">
+              <h2 className="text-base font-bold text-navy mb-0.5">Search Intensity</h2>
+              <p className="text-xs text-gray-400 mb-4">Application submission frequency</p>
+
+              <div className="grid grid-cols-7 gap-1.5 mb-3">
                 {heatmap.map((level, i) => (
                   <div
                     key={i}
-                    className={`w-full aspect-square rounded-md ${heatColors[level]}`}
+                    className={`w-full aspect-square rounded-md transition-colors ${HEATMAP_COLORS[level]}`}
                   />
                 ))}
               </div>
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-[10px] text-gray-400">LOW</span>
+
+              <div className="flex items-center justify-between text-[10px] text-gray-400 font-medium">
+                <span>Low Activity</span>
                 <div className="flex gap-1">
-                  {heatColors.map((c, i) => (
-                    <div key={i} className={`w-3 h-3 rounded-sm ${c}`} />
+                  {HEATMAP_COLORS.map((color, idx) => (
+                    <div key={idx} className={`w-2.5 h-2.5 rounded-sm ${color}`} />
                   ))}
                 </div>
-                <span className="text-[10px] text-gray-400">HIGH</span>
+                <span>High Activity</span>
               </div>
-            </div>
+            </section>
 
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
