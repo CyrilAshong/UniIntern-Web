@@ -1,5 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  Rocket,
+  ClipboardCheck,
+  GraduationCap,
+  ShieldCheck,
+  Bot,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { loginUser } from '../../services/authService';
 
@@ -59,7 +67,7 @@ const StudentLoginPage = () => {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-teal text-xs">🚀</span>
+                  <Rocket className="size-4 text-teal" />
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">
@@ -72,7 +80,7 @@ const StudentLoginPage = () => {
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-teal text-xs">📋</span>
+                  <ClipboardCheck className="size-4 text-teal" />
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">
@@ -90,7 +98,7 @@ const StudentLoginPage = () => {
           <div className="flex-1 p-10 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-8 h-8 bg-navy rounded-lg flex items-center justify-center">
-                <span className="text-white text-sm">🎓</span>
+                <GraduationCap className="size-4 text-white" />
               </div>
               <span className="text-xs font-bold text-navy tracking-widest uppercase">
                 Student Portal
@@ -154,8 +162,15 @@ const StudentLoginPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-navy text-white font-semibold py-3.5 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70">
-                {isLoading ? 'Logging in...' : 'Log In'}
+                className="w-full bg-navy text-white font-semibold py-3.5 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  'Log In'
+                )}
               </button>
             </form>
 
@@ -192,14 +207,14 @@ const StudentLoginPage = () => {
       <div className="py-6 px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-center gap-12">
           {[
-            { icon: '🛡️', label: 'Enterprise Secured' },
-            { icon: '🎓', label: '150+ Uni Partners' },
-            { icon: '🤖', label: 'AI Matching Engine' },
-          ].map((badge) => (
-            <div key={badge.label} className="flex items-center gap-2 text-gray-400">
-              <span className="text-sm">{badge.icon}</span>
+            { icon: ShieldCheck, label: 'Enterprise Secured' },
+            { icon: GraduationCap, label: '150+ Uni Partners' },
+            { icon: Bot, label: 'AI Matching Engine' },
+          ].map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-2 text-gray-400">
+              <Icon className="size-4 text-gray-400" />
               <span className="text-xs font-semibold tracking-wide uppercase">
-                {badge.label}
+                {label}
               </span>
             </div>
           ))}
