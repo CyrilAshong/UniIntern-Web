@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
+const Navbar = ({ sidebarCollapsed }: { sidebarCollapsed?: boolean }) => {  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const navigate = useNavigate();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<nav className="fixed top-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100"
+      style={{ left: sidebarCollapsed !== undefined ? (sidebarCollapsed ? '4rem' : '14rem') : 0, transition: 'left 0.3s' }}>
+      <div className="px-6 h-16 flex items-center justify-between">
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
