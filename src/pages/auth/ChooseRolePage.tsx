@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { GraduationCap, Building2, ExternalLink } from 'lucide-react';
 import Navbar from '../../components/common/Navbar';
 
 const ChooseRolePage = () => {
@@ -33,7 +34,7 @@ const ChooseRolePage = () => {
 
             <div>
               <div className="w-14 h-14 bg-navy rounded-2xl flex items-center justify-center mb-8 relative z-10">
-                <span className="text-white text-2xl">🎓</span>
+                <GraduationCap className="size-7 text-white" />
               </div>
               <h3 className="text-xl font-bold text-navy mb-3">Student</h3>
               <p className="text-gray-500 text-sm leading-6 max-w-xs">
@@ -62,7 +63,7 @@ const ChooseRolePage = () => {
 
             <div>
               <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 relative z-10">
-                <span className="text-white text-2xl">🏢</span>
+                <Building2 className="size-7 text-white" />
               </div>
               <h3 className="text-xl font-bold text-navy mb-3">Company</h3>
               <p className="text-gray-500 text-sm leading-6 max-w-xs">
@@ -90,10 +91,10 @@ const ChooseRolePage = () => {
           <p className="text-gray-500 text-sm mb-1">Not sure which to choose?</p>
           <a
             href="#"
-            className="text-navy text-sm font-medium hover:underline inline-flex items-center gap-1"
+            className="text-navy text-sm font-medium hover:underline inline-flex items-center gap-1.5 group"
           >
-            Read our platform guide
-            <span className="text-xs">↗</span>
+            <span>Read our platform guide</span>
+            <ExternalLink className="size-3.5 text-navy group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
         </div>
       </div>
