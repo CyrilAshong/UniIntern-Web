@@ -1,5 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Building2, 
+  ShieldCheck, 
+  BarChart3, 
+  Users, 
+  Zap, 
+  ArrowRight, 
+  Loader2, 
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { loginUser } from '../../services/authService';
 
@@ -8,7 +17,6 @@ const CompanyLoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,7 +53,7 @@ const CompanyLoginPage = () => {
             {/* Logo */}
             <div className="flex items-center gap-3 mb-20">
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                <span className="text-white text-sm">🏢</span>
+                <Building2 className="size-5 text-white" />
               </div>
               <span className="text-white font-bold text-sm tracking-widest uppercase">
                 UniIntern Corporate
@@ -64,15 +72,15 @@ const CompanyLoginPage = () => {
             {/* Feature grid */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: '🛡️', label: 'Secure Portal' },
-                { icon: '📊', label: 'ATS Integration' },
-                { icon: '👥', label: 'Bulk Sourcing' },
-                { icon: '⚡', label: 'Instant Matching' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <span className="text-sm">{item.icon}</span>
+                { icon: ShieldCheck, label: 'Secure Portal' },
+                { icon: BarChart3, label: 'ATS Integration' },
+                { icon: Users, label: 'Bulk Sourcing' },
+                { icon: Zap, label: 'Instant Matching' },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2.5">
+                  <Icon className="size-4 text-white/80 shrink-0" />
                   <span className="text-white text-sm font-medium">
-                    {item.label}
+                    {label}
                   </span>
                 </div>
               ))}
@@ -140,18 +148,12 @@ const CompanyLoginPage = () => {
                 </div>
                 <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3.5 gap-3 focus-within:border-navy transition-colors">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type= "password"
                     placeholder="••••••••"
                     className="flex-1 text-sm text-navy focus:outline-none"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-navy transition-colors">
-                    {showPassword ? '🙈' : '👁️'}
-                  </button>
                 </div>
               </div>
 
@@ -169,9 +171,18 @@ const CompanyLoginPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-navy text-white font-semibold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2">
-                {isLoading ? 'Logging in...' : (
-                  <>Log In <span>→</span></>
+                className="w-full bg-navy text-white font-semibold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm disabled:opacity-70 flex items-center justify-center gap-2 group"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Log In</span>
+                    <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+                  </>
                 )}
               </button>
             </form>
@@ -184,8 +195,10 @@ const CompanyLoginPage = () => {
               </p>
               <Link
                 to="/company/register"
-                className="text-navy font-semibold text-sm hover:underline">
-                Register your company →
+                className="text-navy font-semibold text-sm hover:underline inline-flex items-center gap-1 group"
+              >
+                <span>Register your company</span>
+                <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -200,7 +213,7 @@ const CompanyLoginPage = () => {
       <div className="border-t border-gray-100 py-4 px-8 flex items-center justify-between bg-white">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-teal" />
+            <div className="w-2 h-2 rounded-full bg-teal animate-pulse" />
             <span className="text-xs text-gray-400">Systems Operational</span>
           </div>
           <a href="#" className="text-xs text-gray-400 hover:text-navy transition-colors">
