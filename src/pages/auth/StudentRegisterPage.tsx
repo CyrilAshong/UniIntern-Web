@@ -1,5 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  Bot,
+  MessageSquare,
+  CheckCircle2,
+  User,
+  Mail,
+  Lock,
+  Info,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { registerStudent } from '../../services/authService';
 
@@ -9,7 +20,6 @@ const StudentRegisterPage = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,13 +70,13 @@ const StudentRegisterPage = () => {
 
           <div className="space-y-4">
             {[
-              { icon: '🤖', label: 'AI-Powered Matching' },
-              { icon: '💬', label: 'Direct Recruiter Lines' },
-              { icon: '✅', label: 'Vetted Opportunities' },
+              { icon: Bot, label: 'AI-Powered Matching' },
+              { icon: MessageSquare, label: 'Direct Recruiter Lines' },
+              { icon: CheckCircle2, label: 'Vetted Opportunities' },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3">
                 <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
-                  <span className="text-sm">{item.icon}</span>
+                  <item.icon className="size-4 text-white" />
                 </div>
                 <span className="text-white text-sm font-medium">{item.label}</span>
               </div>
@@ -115,7 +125,7 @@ const StudentRegisterPage = () => {
                 Full Name
               </label>
               <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-navy focus-within:bg-white transition-colors">
-                <span className="text-gray-400 text-sm">👤</span>
+                <User className="size-4 text-gray-400 shrink-0" />
                 <input
                   type="text"
                   placeholder="Alex Rivers"
@@ -131,7 +141,7 @@ const StudentRegisterPage = () => {
                 University Email
               </label>
               <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-navy focus-within:bg-white transition-colors">
-                <span className="text-gray-400 text-sm">✉️</span>
+                <Mail className="size-4 text-gray-400 shrink-0" />
                 <input
                   type="email"
                   placeholder="alex@university.edu"
@@ -147,26 +157,20 @@ const StudentRegisterPage = () => {
                 Create Password
               </label>
               <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-navy focus-within:bg-white transition-colors">
-                <span className="text-gray-400 text-sm">🔒</span>
+                <Lock className="size-4 text-gray-400 shrink-0" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type= "password"
                   placeholder="••••••••"
                   className="flex-1 text-sm text-navy bg-transparent focus:outline-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-navy transition-colors">
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
               </div>
             </div>
 
             {/* OTP Info */}
             <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-              <span className="text-blue-500 text-sm mt-0.5">ℹ️</span>
+              <Info className="size-4 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-sm text-gray-600 leading-5">
                 Next Step: A 6-digit OTP verification code will be sent to your
                 email.
@@ -176,8 +180,18 @@ const StudentRegisterPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-navy text-white font-bold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm tracking-wide disabled:opacity-70 uppercase">
-              {isLoading ? 'Creating Account...' : 'Create Student Account →'}
+              className="w-full bg-navy text-white font-bold py-4 rounded-xl hover:bg-navy-light transition-colors text-sm tracking-wide disabled:opacity-70 uppercase flex items-center justify-center gap-2">
+              {isLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Student Account</span>
+                  <ArrowRight className="size-4" />
+                </>
+              )}
             </button>
           </form>
 
