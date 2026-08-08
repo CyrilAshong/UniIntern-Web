@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import StudentLayout from './components/common/StudentLayout';
 
 // Auth pages
 import WelcomePage from './pages/auth/WelcomePage';
@@ -18,6 +19,7 @@ import StudentProfilePage from './pages/student/StudentProfilePage';
 import EditProfilePage from './pages/student/EditProfilePage';
 import UploadDocumentsPage from './pages/student/UploadDocumentsPage';
 import CompanyPublicProfilePage from './pages/student/CompanyPublicProfilePage';
+import ApplyJobPage from './pages/student/ApplyJobPage';
 
 // Company pages
 import CompanyJobsPage from './pages/company/CompanyJobsPage';
@@ -59,19 +61,19 @@ function App() {
         </>
       )}
 
-      {/* Student routes */}
       {user?.role === 'STUDENT' && (
-        <>
+        <Route element={<StudentLayout />}>
           <Route path="/" element={<StudentDashboardPage />} />
           <Route path="/feed" element={<StudentFeedPage />} />
           <Route path="/jobs/:jobId" element={<JobDetailPage />} />
+          <Route path="/jobs/:jobId/apply" element={<ApplyJobPage />} />
           <Route path="/applications" element={<StudentApplicationsPage />} />
           <Route path="/profile" element={<StudentProfilePage />} />
           <Route path="/profile/edit" element={<EditProfilePage />} />
           <Route path="/documents" element={<UploadDocumentsPage />} />
           <Route path="/company/:companyId" element={<CompanyPublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" />} />
-        </>
+        </Route>
       )}
 
       {/* Company routes */}
